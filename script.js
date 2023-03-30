@@ -16,6 +16,15 @@ const tabsContent = document.querySelectorAll('.operations__content');
 const nav = document.querySelector('.nav');
 const allSection = document.querySelectorAll('.section');
 const imgTargets = document.querySelectorAll('img[data-src]');
+const slides = document.querySelectorAll('.slide');
+const slider = document.querySelector('.slider');
+const btnLeft = document.querySelector('.slider__btn--left');
+const btnRight = document.querySelector('.slider__btn--right');
+const dotContainer = document.querySelector('.dots');
+
+function checkTranslateNum(slide) {
+  return +slide.style.transform.replace('translateX(', '').replace('%)', '');
+}
 
 const openModal = function(e) {
   e.preventDefault();
@@ -182,9 +191,107 @@ const imgObserver = new IntersectionObserver(revealImg, {
   rootMargin: '200px'
 });
 
-imgTargets.forEach(img => {
-  imgObserver.observe(img);
+imgTargets.forEach(img => imgObserver.observe(img));
+
+// slider.style.transform = 'scale(.2) translateX(-800px)';
+// slider.style.overflow = 'visible';
+slides.forEach((slide, i) => slide.style.transform = `translateX(${i * 100}%)`);
+
+const goLeft = function(slides) {
+  const count = slides.length;
+  const firstNumber = checkTranslateNum(slides[0]);
+  console.log(firstNumber);
+
+  slides.forEach((slide, i) => {
+    let number = checkTranslateNum(slide);
+    slide.style.transform = `translateX(${firstNumber >= 0 ? -(count - 1 - i) * 100 : number + 100}%)`;
+  });
+
+  const index = Array.from(slides).findIndex(slide => {
+    return !checkTranslateNum(slide);
+  });
+  console.log(index);
+  checkingDot(index);
+};
+
+const goRight = function(slides) {
+  const count = slides.length;
+  const lastNumber = checkTranslateNum(slides[count - 1]);
+  console.log(slides);
+
+  slides.forEach((slide, i) => {
+    let number = checkTranslateNum(slide);
+    slide.style.transform = `translateX(${lastNumber <= 0 ? i * 100 : number - 100}%)`;
+  });
+
+  const index = Array.from(slides).findIndex(slide => {
+    return !checkTranslateNum(slide);
+  });
+  console.log(index);
+  checkingDot(index);
+};
+btnRight.addEventListener('click', goRight.bind(null, slides));
+
+btnLeft.addEventListener('click', goLeft.bind(null, slides));
+
+document.addEventListener('keydown', function(e) {
+  if (e.key[0] !== 'A') return;
+  console.log(e.key === '');
+  if (e.key === 'ArrowLeft') goLeft(slides);
+  if (e.key === 'ArrowRight') goRight(slides);
 });
+
+const goToSlide = function(to) {
+  const toNumber = checkTranslateNum(slides[to]);
+  if (!toNumber) return;
+
+  const difference = toNumber / 100;
+  for (let i = 0; i < Math.abs(difference); i++) {
+    if (difference < 0) goLeft(slides);
+    if (difference > 0) goRight(slides);
+  }
+};
+
+const createDots = function(slides) {
+  slides.forEach((slide, i) => {
+    let number = checkTranslateNum(slide);
+    const active = !number ? 'dots__dot--active' : '';
+    dotContainer.insertAdjacentHTML('beforeend', `
+    <button class='dots__dot ${active}' data-slide='${i + 1}'/>
+    `);
+  });
+};
+createDots(slides);
+
+function checkingDot(to) {
+  const dots = dotContainer.querySelectorAll('.dots__dot');
+  console.log(dots);
+  dotContainer.querySelectorAll('.dots__dot--active').forEach(dot => dot.classList.remove('dots__dot--active'));
+  dots[to].classList.add('dots__dot--active');
+};
+
+dotContainer.addEventListener('click', function(e) {
+  if (!e.target.classList.contains('dots__dot')) return;
+
+  const index = e.target.dataset.slide - 1;
+  goToSlide(index);
+  checkingDot(index);
+});
+
+document.addEventListener('DOMContentLoaded', function(e) {
+  console.log('DOMContent is loaded', e);
+});
+window.addEventListener('load', function(e) {
+  console.log('page full loaded', e);
+});
+
+window.addEventListener('beforeunload', function(e) {
+  e.preventDefault();
+  console.log(e.returnValue);
+
+  e.returnValue = '';
+});
+
 // const obsCallback = function(entries, observer) {
 //   entries.forEach(entry => {
 //     // console.log(entry);
